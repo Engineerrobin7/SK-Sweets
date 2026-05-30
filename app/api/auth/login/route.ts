@@ -8,7 +8,7 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   try {
     // Basic rate limiting by IP
-    const ip = request.ip || '127.0.0.1';
+    const ip = request.headers.get('x-forwarded-for') || (request as any).ip || '127.0.0.1';
     const limiter = rateLimit(ip, 10, 60000); // 10 attempts per minute
 
     if (!limiter.success) {
