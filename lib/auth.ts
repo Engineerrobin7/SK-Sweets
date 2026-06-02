@@ -6,11 +6,15 @@ import { logger } from './logger';
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'development-secret');
 
-if (!JWT_SECRET || JWT_SECRET === 'your-strong-random-secret-key-here' || JWT_SECRET === 'your-secret-key-change-in-production') {
-  logger.error('CRITICAL: JWT_SECRET is not properly set in environment variables!');
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set in production environment');
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'development-secret');
+  if (!secret || secret === 'your-strong-random-secret-key-here' || secret === 'your-secret-key-change-in-production') {
+    logger.error('CRITICAL: JWT_SECRET is not properly set in environment variables!');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET must be set in production environment');
+    }
   }
+  return secret || 'development-secret';
 }
 
 export interface JWTPayload {
@@ -29,12 +33,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET!, { expiresIn: '7d' });
+  return jwt.sign(payload, getJWTSecret(), { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET!) as JWTPayload;
+    return jwt.verify(token, getJWTSecret()) as JWTPayload;
   } catch {
     return null;
   }
